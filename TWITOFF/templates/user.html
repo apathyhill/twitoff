@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Twitoff | {{screen_name}}</title>
+
+        <meta charset="UTF-8">
+        <meta name="description" content="Twitoff - User Tweets from {{screen_name}}">
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" type="text/css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:600&display=swap">
+        <link rel="icon" type="image/png" href="{{pfp_url}}"/>
+
+        <script src="{{ url_for('static', filename='js/jquery-3.4.1.min.js')}}" type="text/javascript"></script>
+    </head>
+
+    <body>
+        <div id="header">
+            <a href="https://apathyhill.com">
+                <div id="banner"><img id="logo" src="{{ url_for('static', filename='img/header/logo.png')}}"/></div>
+            </a>
+        </div>
+        <div id="body2">
+            <h1> Twitoff: User Profile </h1>
+            <div id="twitoff-user-info">
+                <a href="https://twitter.com/{{screen_name}}">
+                    <img src={{pfp_url}}>
+                    <h2> Tweets from: @{{screen_name}} </h2>
+                </a>
+            </div>
+            {% for tweet in tweets %}
+            <a href="https://twitter.com/{{screen_name}}/status/{{tweet[1]}}">
+            <p class="twitoff-user-tweet" style="border-left-color: #{{user_color}}">{{ tweet[0] }}</p>
+        </a>
+            {% endfor %}
+        </div>
+    </body>
+</html>

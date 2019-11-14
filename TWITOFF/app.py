@@ -1,7 +1,8 @@
 from decouple import config
 from flask import Flask, render_template, request
 from .models import DB, User, Tweet
-from .twitter import twitter_client, basilica_client
+from .twitter import twitter_client, basilica_client, update_user
+from .predict import predict_user
 
 def create_app():
     app = Flask(__name__)
@@ -14,47 +15,50 @@ def create_app():
     @app.route("/")
     def root():
         users = User.query.all()
-        return render_template("base.html", title="Home", users=users)
-
-    @app.route("/setup")
-    def setup():
-        users = ["ElonMusk", "MichaelReeves08", "CrabsandScience", "GavinFree", "TomScott", "AH_Michael"]
-
-        DB.drop_all()
-        DB.create_all()
-
-        for user in users:
-            print(user)
-            tweets = twitter_client.get_user_timeline(count=20, screen_name=user, exclude_replies=True, include_rts=False, mode="extended")
-            user_data = twitter_client.show_user(screen_name=user)
-            
-            db_user = User(user_id=user_data["id"], screen_name=user_data["screen_name"], display_name=user_data["name"])
-
-            for tweet in tweets:
-                embed = basilica_client.embed_sentence(tweet["text"], model="twitter")
-                db_tweet = Tweet(tweet_id=tweet["id"], text=tweet["text"], author_id=user_data["id"], embedding = embed)
-                DB.session.add(db_tweet)
-
-            DB.session.add(db_user)
-        DB.session.commit()
-
-        return "Users added!"
-
-
+        return render_template("home.html", title="Home", users=users)
 
     @app.route("/reset")
     def reset():
         DB.drop_all()
         DB.create_all()
-        return render_template("base.html", title="Reset", users=[])
+        return render_template("base.html", title="Reset", h1="Reset")
 
-    @app.route("/user/<username>")
-    def show_user_tweets(username):
-        tweets = twitter_client.get_user_timeline(count=200, screen_name=username, exclude_replies=True, include_rts=False)
-        user = twitter_client.show_user(screen_name=username)
-        pfp = user["profile_image_url"].replace("_normal", "")
-        color = user["profile_link_color"]
-        tweets = [[tweet["text"], tweet["id"]] for tweet in tweets]
-        return render_template("user.html", screen_name=username, tweets=tweets, pfp_url=pfp, user_color=color)
+    @app.route("/user", methods=["POST"])
+    @app.route("/user/<screen_name>")
+    def show_user_tweets(screen_name=None):
+        screen_name = screen_name or request.values["screen_name"]
+        try:
+            if request.method == "POST":
+                message = update_user(screen_name)
+                print(message)
+            user = User.query.filter(User.screen_name == screen_name).one()
+            tweets = Tweet.query.filter(user.user_id == Tweet.author_id)
+            tweets = [[tweet.text, tweet.tweet_id] for tweet in tweets]
+            pfp_url = user.pfp_url
+            color = user.color
+            print("test")
+        except Exception as e:
+            print(str(e))
+            tweets = []
+            pfp_url = ""
+            color = "000000"
+
+        return render_template("user.html", screen_name=screen_name, tweets=tweets, pfp_url=pfp_url, user_color=color)
+
+    @app.route("/compare", methods=["POST"])
+    def compare(message=""):
+        user1, user2 = sorted([request.values["user1"],
+                               request.values["user2"]])
+        tweet_text = request.values["tweet_text"]
+        if user1 == user2:
+            message = "Cannot compare a user to themselves!"
+        else:
+            prediction = predict_user(user1, user2, tweet_text)
+            print(prediction)
+            message = """"{}" is more likely to be said by {} than {}""".format(
+                tweet_text, user1 if prediction else user2,
+                user2 if prediction else user1)
+        return render_template("prediction.html", title="Prediction", message=message)
+
 
     return app

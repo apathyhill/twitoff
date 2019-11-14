@@ -8,6 +8,8 @@ class User(DB.Model):
     user_id = DB.Column(DB.Integer, primary_key=True)
     screen_name = DB.Column(DB.String(16), nullable=False)
     display_name = DB.Column(DB.String(16), nullable=False)
+    pfp_url = DB.Column(DB.String(100), nullable=False)
+    color = DB.Column(DB.String(6), nullable=False)
 
 class Tweet(DB.Model):
     tweet_id = DB.Column(DB.Integer, primary_key=True)

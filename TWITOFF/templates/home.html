@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %} {{screen_name}} Home {% endblock %}
+{% block content %}
+    <form action="/user" method="post">
+        <input type="text" name="screen_name" placeholder="Username (case sensitive)">
+        <input type="submit" value="Add User">
+    </form>
+
+<!-- add in form to select users to compare -->
+    <form id="form-compare" action="/compare" method="post">
+        <div class="result" style="float:left;">
+            <img class="result-pfp" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png">
+            <select name="user1">
+                {% for user in users %}
+                    <option value = "{{ user.screen_name }}">{{ user.screen_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="result" style="float:right;">
+            <img class="result-pfp" src="https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png">
+            <select name="user2">
+                {% for user in users %}
+                    <option value = "{{ user.screen_name }}">{{ user.screen_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div id="tweet-text">
+                <input type="text" name="tweet_text" placeholder="Text to predict">
+                <input type="submit" value="Compare Users">
+        </div>
+    </form>
+
+        {% endblock %}
